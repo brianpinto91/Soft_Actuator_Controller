@@ -60,12 +60,18 @@ def main():
 
 def initHardware():
     pSens0 = DPressureSens(0,P_mplx_id)
+    logger.debug("Pressure sensor is set")
     IMUsens0 = MPU_9150(0,mplx_id_0)
+    logger.debug("IMU0 sensor is set")
     IMUsens1 = MPU_9150(0,mplx_id_1)
+    logger.debug("IMU1 sensor is set")
     pActuator = Valve(0,pValve0)
+    logger.debug("Actuator is set")
     dActuator = DiscreteValve(0,dValve0)
+    logger.debug("Discrete valve is set")
     GPIO.setup(stopButton, GPIO.IN)
     GPIO.add_event_detect(stopButton, GPIO.RISING)
+    logger.debug("Exit button is set")
     #exitButton = stopButton
     return pSens0, IMUsens0, IMUsens1, pActuator, dActuator
 
