@@ -56,7 +56,7 @@ def main():
         logger.error("Error running the program")
     finally:
         GPIO.cleanup()
-        PWM.set_duty_cycle("P9_23", 0)
+        PWM.set_duty_cycle("P9_22", 0)
 
 def initHardware():
     pSens0 = DPressureSens(0,P_mplx_id)
