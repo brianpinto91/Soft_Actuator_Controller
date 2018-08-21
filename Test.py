@@ -52,8 +52,8 @@ def main():
             angle = calc_angle(IMUsens0,IMUsens1,-90)
             logger.debug("Pressure,{}, Angle,{}".format(pSens0.get_value(),angle))
             time.sleep(0.01)
-    except Exception:
-        logger.error("Error running the program")
+    except Exception as err:
+        logger.error("Error running the program, {}".format(err))
     finally:
         GPIO.cleanup()
        
