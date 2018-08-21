@@ -46,11 +46,12 @@ def main():
     try:
         inputPulse = 10
         logger.debug("PWM is set to:{}".format(inputPulse))
-        pSens0, IMUsens0, IMUsens1, pActuator, dActuator = initHardware()
+        #pSens0, IMUsens0, IMUsens1, pActuator, dActuator = initHardware()
+        pSens0, pActuator, dActuator = initHardware()
         pActuator.set_pwm(PWM)
         while not GPIO.event_detected(stopButton):
-            angle = calc_angle(IMUsens0,IMUsens1,-90)
-            logger.debug("Pressure,{}, Angle,{}".format(pSens0.get_value(),angle))
+            #angle = calc_angle(IMUsens0,IMUsens1,-90)
+            logger.debug("Pressure,{}".format(pSens0.get_value()))
             time.sleep(0.01)
     except Exception as err:
         logger.error("Error running the program, {}".format(err))
@@ -61,10 +62,10 @@ def main():
 def initHardware():
     pSens0 = DPressureSens(0,P_mplx_id)
     logger.debug("Pressure sensor is set")
-    IMUsens0 = MPU_9150(0,mplx_id_0)
-    logger.debug("IMU0 sensor is set")
-    IMUsens1 = MPU_9150(0,mplx_id_1)
-    logger.debug("IMU1 sensor is set")
+    #IMUsens0 = MPU_9150(0,mplx_id_0)
+    #logger.debug("IMU0 sensor is set")
+    #IMUsens1 = MPU_9150(0,mplx_id_1)
+    #logger.debug("IMU1 sensor is set")
     pActuator = Valve(0,pValve0)
     logger.debug("Actuator is set")
     dActuator = DiscreteValve(0,dValve0)
@@ -72,8 +73,9 @@ def initHardware():
     GPIO.setup(stopButton, GPIO.IN)
     GPIO.add_event_detect(stopButton, GPIO.RISING)
     logger.debug("Exit button is set")
-    #exitButton = stopButton
-    return pSens0, IMUsens0, IMUsens1, pActuator, dActuator
+    exitButton = stopButton
+    #return pSens0, IMUsens0, IMUsens1, pActuator, dActuator
+    return pSens0, pActuator, dActuator
 
 
 class MultiPlexer(object):
