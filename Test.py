@@ -56,7 +56,7 @@ def main():
         logger.error("Error running the program")
     finally:
         GPIO.cleanup()
-        PActuator.set_pwm(0)
+        pActuator.set_pwm(0)
 
 def initHardware():
     pSens0 = DPressureSens(0,P_mplx_id)
