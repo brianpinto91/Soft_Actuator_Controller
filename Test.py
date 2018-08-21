@@ -44,8 +44,8 @@ stopButton = "P9_23"
 
 def main():
     try:
-        PWM = 10
-        logger.debug("PWM is set to:{}".format(PWM))
+        inputPulse = 10
+        logger.debug("PWM is set to:{}".format(inputPulse))
         pSens0, IMUsens0, IMUsens1, pActuator, dActuator = initHardware()
         pActuator.set_pwm(PWM)
         while not GPIO.event_detected(stopButton):
@@ -56,7 +56,7 @@ def main():
         logger.error("Error running the program")
     finally:
         GPIO.cleanup()
-        pActuator.set_pwm(0)
+        PWM.set_duty_cycle("P9_23", 0)
 
 def initHardware():
     pSens0 = DPressureSens(0,P_mplx_id)
