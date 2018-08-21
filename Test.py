@@ -44,11 +44,11 @@ stopButton = "P9_23"
 
 def main():
     try:
-        inputPulse = 10
+        inputPulse = 10.0
         logger.debug("PWM is set to:{}".format(inputPulse))
         #pSens0, IMUsens0, IMUsens1, pActuator, dActuator = initHardware()
         pSens0, pActuator, dActuator = initHardware()
-        pActuator.set_pwm(PWM)
+        pActuator.set_pwm(inputPulse)
         while not GPIO.event_detected(stopButton):
             #angle = calc_angle(IMUsens0,IMUsens1,-90)
             logger.debug("Pressure,{}".format(pSens0.get_value()))
