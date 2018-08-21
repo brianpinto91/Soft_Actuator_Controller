@@ -24,7 +24,7 @@ logger.addHandler(file_handler)
 
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(formatter)
-
+logger.addhandler(console_handler)
 
 #test belly top left
 #pressure sensor connected on mplx_id 4
