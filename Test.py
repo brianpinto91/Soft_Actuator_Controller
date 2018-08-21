@@ -17,7 +17,7 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-formatter=logging.Formatter("%(asctime)s %(message)s")
+formatter=logging.Formatter("%(asctime)s,%(message)s")
 file_handler =logging.FileHandler('LogFile.log')
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
@@ -44,12 +44,13 @@ stopButton = "P9_23"
 
 def main():
     try:
-        reference = 0.6
+        PWM = 10
+        logger.debug("PWM is set to:{}".format(PWM))
         pSens0, IMUsens0, IMUsens1, pActuator, dActuator = initHardware()
-        pActuator.set_pwm(reference*100)
+        pActuator.set_pwm(PWM)
         while not GPIO.event_detected(stopButton):
             angle = calc_angle(IMUsens0,IMUsens1,-90)
-            logger.debug("Pressure = {}, Angle = {}".format(pSens0.get_value(),angle))
+            logger.debug("Pressure,{}, Angle,{}".format(pSens0.get_value(),angle))
     except Exception:
         logger.error("Error running the program")
     finally:
@@ -160,7 +161,7 @@ class Valve(object):
 #        print(
 #            'starting PWM with duty cycle 1. at Prportional Valve ', self.name)
         PWM.start(self.pwm_pin, 0, 25000)
-        PWM.set_duty_cycle(self.pwm_pin, 10.0)
+        PWM.set_duty_cycle(self.pwm_pin, 0.0)
 
     def cleanup(self):
         """Stop pwm services."""
