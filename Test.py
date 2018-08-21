@@ -56,7 +56,7 @@ def main():
         logger.error("Error running the program")
     finally:
         GPIO.cleanup()
-        PWM.stop(pValve0)
+        PActuator.set_pwm(0)
 
 def initHardware():
     pSens0 = DPressureSens(0,P_mplx_id)
@@ -162,7 +162,7 @@ class Valve(object):
 #        print(
 #            'starting PWM with duty cycle 1. at Prportional Valve ', self.name)
         PWM.start(self.pwm_pin, 0, 25000)
-        PWM.set_duty_cycle(self.pwm_pin, 0.0)
+        PWM.set_duty_cycle(self.pwm_pin, 0)
 
     def cleanup(self):
         """Stop pwm services."""
