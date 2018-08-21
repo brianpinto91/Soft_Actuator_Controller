@@ -51,6 +51,7 @@ def main():
         while not GPIO.event_detected(stopButton):
             angle = calc_angle(IMUsens0,IMUsens1,-90)
             logger.debug("Pressure,{}, Angle,{}".format(pSens0.get_value(),angle))
+            time.sleep(0.01)
     except Exception:
         logger.error("Error running the program")
     finally:
