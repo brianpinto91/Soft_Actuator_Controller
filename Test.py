@@ -9,7 +9,7 @@ Created on Thu Aug 15 22:26:35 2018
 import Adafruit_BBIO.GPIO as GPIO
 import Adafruit_GPIO.I2C as Adafruit_I2C
 import Adafruit_BBIO.PWM as PWM
-from __future__ import print_function
+#from __future__ import print_function
 import time
 import logging
 import numpy as np
@@ -43,18 +43,24 @@ P_mplx_id = 4
 stopButton = "P9_23"
 
 def main():
+    pSens0, IMUsens0, IMUsens1, pActuator, dActuator = initHardware()
+    mean = 50.0
+    std = 5
+    num_samples = 2000
+    samples = np.random.normal(mean,std,num_samples)
     try:
-        reference = 0.6
-        pSens0, IMUsens0, IMUsens1, pActuator, dActuator = initHardware()
-        pActuator.set_pwm(reference*100)
-        while not GPIO.event_detected(stopButton):
-            angle = calc_angle(IMUsens0,IMUsens1,-90)
-            logger.debug("Pressure = {}, Angle = {}".format(pSens0.get_value(),angle))
-    except Exception:
-        logger.error("Error running the program")
+        for u in samples:
+            pActuator.set_pwm(u)
+            angle = calc_angle(IMUsens1,IMUsens0,0)
+            logger.debug("presseure = {}, Angle = {}".format(pSens0.get_value(),angle))
+            time.sleep(0.01)
+            if GPIO.event_detected(stopButton):
+                break
+    except Exception as err:
+        logger.error("Error running the program: {}".format(err))
     finally:
         GPIO.cleanup()
-        PWM.stop(pValve0)
+        pActuator.set_pwm(10.0)
 
 def initHardware():
     pSens0 = DPressureSens(0,P_mplx_id)

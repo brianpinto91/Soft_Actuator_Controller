@@ -137,3 +137,6 @@ class PidController(Controller):
             self.windup_guard = 0
             self.last_out = controller_output
         return self.last_out
+
+def sys_input(ctr_out):
+    return (.5 + ctr_out/2)*100

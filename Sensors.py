@@ -92,3 +92,4 @@ class Button(object):
         
     def isPressed(self):
         return GPIO.event_detected(self.port)    
+    
