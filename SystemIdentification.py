@@ -14,11 +14,12 @@ import time
 import logging
 import numpy as np
 import datetime
+import controller as controller
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 formatter=logging.Formatter("%(asctime)s %(message)s")
-file_handler =logging.FileHandler('systemIdentLog.log')
+file_handler =logging.FileHandler('P_to_A_Log.log')
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
@@ -42,38 +43,35 @@ mplx_id_1 = 1
 P_mplx_id = 4
 stopButton = "P9_23"
 
+
+MAX_CTROUT = 0.50     # [10V]
+TSAMPLING = 0.001     # [sec]
+PID = [1.05, 0.03, 0.01]    # [1]
+
+
 def main():
     pSens0, IMUsens0, IMUsens1, pActuator, dActuator = initHardware()
-    try:
-        pActuator.set_pwm(10)
-        time.sleep(5)
-        samples = 200
-        startTime=datetime.datetime.now()
+    
+        #clear any air inside the actuator before starting the experiment
+    pActuator.set_pwm(10)
+    time.sleep(5)
+    samples = 200
         
-        pActuator.set_pwm(60)
-        for u in range(samples):
-            logReadings(IMUsens1,IMUsens0,pSens0,startTime)
+    pController = controller.PidController(PID,TSAMPLING,MAX_CTROUT)
         
-        pActuator.set_pwm(30)
-        for u in range(samples):
-            logReadings(IMUsens1,IMUsens0,pSens0,startTime)
-           
-        pActuator.set_pwm(50)
-        for u in range(samples):
-            logReadings(IMUsens1,IMUsens0,pSens0,startTime)    
+    startTime=datetime.datetime.now()
         
+    reference = [0.3, 0.1, 0.5, 0.2, 0.7, 0.1]
+    
+    try:    
+        for r in reference:
+            for u in range(samples):
+                Pout = pSens0.get_value()
+                ctrout = controller.sys_input(pController.output(r,Pout))
+                pActuator.set_pwm(ctrout)
+                time.sleep(TSAMPLING)
+                logReadings(IMUsens1,IMUsens0,pSens0,startTime)
         
-        pActuator.set_pwm(20)
-        for u in range(samples):
-            logReadings(IMUsens1,IMUsens0,pSens0,startTime)
-            
-        pActuator.set_pwm(60)
-        for u in range(samples):
-            logReadings(IMUsens1,IMUsens0,pSens0,startTime)
-        
-        pActuator.set_pwm(10)
-        for u in range(samples):
-            logReadings(IMUsens1,IMUsens0,pSens0,startTime)
     
     except Exception as err:
         logger.error("Error running the program: {}".format(err))
