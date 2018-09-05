@@ -25,6 +25,7 @@ logger.addHandler(file_handler)
 
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 
 #test belly top left
