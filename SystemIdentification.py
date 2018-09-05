@@ -48,7 +48,7 @@ stopButton = "P9_23"
 MAX_CTROUT = 0.50     # [10V]
 TSAMPLING = 0.001     # [sec]
 PID = [1.05, 0.03, 0.01]    # [1]
-
+PIDimu = [0.0117, 1.012, 0.31]
 
 def main():
     pSens0, IMUsens0, IMUsens1, pActuator, dActuator = initHardware()
@@ -58,17 +58,19 @@ def main():
     time.sleep(5)
     samples = 200
         
-    pController = controller.PidController(PID,TSAMPLING,MAX_CTROUT)
+    #pController = controller.PidController(PID,TSAMPLING,MAX_CTROUT)
+    aController = controller.PidController(PID_imu, TSAMPLING,MAX_CTROUT)
         
     startTime=datetime.datetime.now()
         
-    reference = [0.3, 0.1, 0.5, 0.2, 0.7, 0.1]
+    reference=[75.0]
     
     try:    
         for r in reference:
             for u in range(samples):
-                Pout = pSens0.get_value()
-                ctrout = controller.sys_input(pController.output(r,Pout))
+                #Pout = pSens0.get_value()
+                Aout = calc_angle(IMUsens1,IMUsens0,0)
+                ctrout = controller.sys_input(aController.output(r,Aout))
                 pActuator.set_pwm(ctrout)
                 time.sleep(TSAMPLING)
                 logReadings(IMUsens1,IMUsens0,pSens0,startTime,r)
