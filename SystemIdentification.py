@@ -14,7 +14,7 @@ import time
 import logging
 import numpy as np
 import datetime
-import controller as controller
+import Controller as controller
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
