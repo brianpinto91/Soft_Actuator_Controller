@@ -82,7 +82,7 @@ def main():
 
 def logReadings(IMUsens1,IMUsens0,pSens0,startTime,r):
     angle = calc_angle(IMUsens1,IMUsens0,0)
-    timeElapsed = startTime - datetime.datetime.now()
+    timeElapsed = datetime.datetime.now()-startTime
     logger.debug("Elapsed time = {}, ref = {}, presseure = {}, Angle = {}".format(timeElapsed,r,pSens0.get_value(),angle))
     
 def initHardware():
