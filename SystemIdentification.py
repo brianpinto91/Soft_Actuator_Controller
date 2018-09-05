@@ -70,7 +70,7 @@ def main():
                 ctrout = controller.sys_input(pController.output(r,Pout))
                 pActuator.set_pwm(ctrout)
                 time.sleep(TSAMPLING)
-                logReadings(IMUsens1,IMUsens0,pSens0,startTime)
+                logReadings(IMUsens1,IMUsens0,pSens0,startTime,r)
         
     
     except Exception as err:
@@ -79,10 +79,10 @@ def main():
         GPIO.cleanup()
         pActuator.set_pwm(10.0)
 
-def logReadings(IMUsens1,IMUsens0,pSens0,startTime):
+def logReadings(IMUsens1,IMUsens0,pSens0,startTime,r):
     angle = calc_angle(IMUsens1,IMUsens0,0)
     timeElapsed = startTime - datetime.datetime.now()
-    logger.debug("Elapsed time = {}, presseure = {}, Angle = {}".format(timeElapsed,pSens0.get_value(),angle))
+    logger.debug("Elapsed time = {}, ref = {}, presseure = {}, Angle = {}".format(timeElapsed,r,pSens0.get_value(),angle))
     
 def initHardware():
     pSens0 = DPressureSens(0,P_mplx_id)
