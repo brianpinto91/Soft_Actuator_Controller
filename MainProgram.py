@@ -15,11 +15,11 @@ import Controller as Controller
 import time
 import logging
 import numpy as np
-
+import datetime
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-formatter=logging.Formatter("%(asctime)s %(message)s")
+formatter=logging.Formatter("%(message)s")
 file_handler =logging.FileHandler('ContollerDebug.log')
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
@@ -51,49 +51,69 @@ PID = [1.05, 0.03, 0.01]    # [1]
 PIDimu = [0.0117, 1.012, 0.31]
 MAX_PRESSURE = 1.0
 
+MAX_CTROUT = 0.50     # [10V]
+TSAMPLING = 0.001     # [sec]
+PIDp = [1.05, 0.03, 0.01]    # [1]
+PIDa = [0.8, 0.5, 0.0]
 
 
 '''
-The idea is to have two contollers, one each for pressure and angle. In normal operation the angle based controller will be active. 
-If the desired angle is not reached even after the pressure reaches the Max_Pressure then the controller is switched to pressure based controller.
-The pressure reference is calculated from the angle reference and this factor depends on each robot.  
+  
 '''
 def main():
     pSens0, IMUsens0, IMUsens1, pActuator, dActuator, stopButton = initHardware()
     pController = Controller.PidController(PID,TSAMPLING,MAX_CTROUT)
     aController = Controller.PidController(PIDimu,TSAMPLING,MAX_CTROUT)
-    angle_r = 45 #set angle reference
-    pressure_r = angleToPress(angle_r)
-    switchController = False
+   
+    pActuator.set_pwm(10)
+    time.sleep(5)
+    startTime=datetime.datetime.now()
+    
+    """
+            +                                              Pref    +                                  PWM
+    Aref-----[ ]-----> aController ----> PressureSaturate --------> [ ]---> PController ---> SysInput ---> Actuator ---------------> Aout
+            - ^                                                    - ^                                             |              | 
+              |                                                      |                                             |---> Pout     |
+              |                                                      -----------------------------------------------              |
+              |                                                                                                                   |
+              ---------------------------------------------------------------------------------------------------------------------
+
+    """
+    
+    Aref = [40]
     try:
        while not stopButton.isPressed():
            #read system output
-           pressure_y = pSens0.get_value()
-           angle_y = calc_angle(IMUsens1,IMUsens0,0)
+           Pout = pSens0.get_value()
+           Aout = calc_angle(IMUsens1,IMUsens0,0)
            
-           #decide on the controller
-           if pressure_y > MAX_PRESSURE and angle_y < angle_r:
-               switchController = True
+           #set pressure reference based on angle output
+           #Bound the reference pressure between 0 and MAX_Pressure
+           Pref = pressureSaturate(aController.output(Aref,Aout))
            
-           #Use pressure based controller if the system encounters abnormality (eg desired angle is not reached even though the presuure is at MAX_PRESSURE) 
-           if switchController:
-               aController.reset_state
-               controller_out = pController.output(pressure_r,pressure_y)
+           #Use pressure controller to follow the pressure reference
+           Actuator_IN = Controller.sys_input(pController.output(Pref,Pout))
+           pActuator.set_pwm(Actuator_IN)
            
-           #Angle based controller is used as long as system behaves normally
-           if not switchController:
-               pController.reset_state
-               controller_out = aController.output(angle_r,angle_y)
-
-           #drive the system based on the decided control output
-           pActuator.set_pwm(Controller.sys_input(controller_out))
            time.sleep(TSAMPLING)
+           logReadings(IMUsens1,IMUsens0,pSens0,startTime,Aref)
     except Exception as err:
         logger.error("Error running the program: {}".format(err))
     finally:
         GPIO.cleanup()
         pActuator.set_pwm(10.0)
 
+def logReadings(IMUsens1,IMUsens0,pSens0,startTime,Aref):
+    angle = calc_angle(IMUsens1,IMUsens0,0)
+    timeElapsed = datetime.datetime.now()-startTime
+    logger.debug("Elapsed time = {}, ref,{}, presseure, {}, Angle, {}".format(timeElapsed,Aref,pSens0.get_value(),angle))
+    
+def pressureSaturate(inPressure):
+    if inPressure > MAX_PRESSURE:
+        return MAX_PRESSURE
+    else:
+        return 0
+    
 def initHardware():
     pSens0 = Sensors.DPressureSens(0,P_mplx_id)
     IMUsens0 = Sensors.MPU_9150(0,mplx_id_0)

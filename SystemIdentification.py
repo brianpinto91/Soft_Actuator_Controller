@@ -18,7 +18,7 @@ import Controller as controller
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-formatter=logging.Formatter("%(asctime)s %(message)s")
+formatter=logging.Formatter("%(message)s")
 file_handler =logging.FileHandler('P_to_A_Log.log')
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
@@ -85,7 +85,7 @@ def main():
 def logReadings(IMUsens1,IMUsens0,pSens0,startTime,r):
     angle = calc_angle(IMUsens1,IMUsens0,0)
     timeElapsed = datetime.datetime.now()-startTime
-    logger.debug("Elapsed time = {}, ref = {}, presseure = {}, Angle = {}".format(timeElapsed,r,pSens0.get_value(),angle))
+    logger.debug("Elapsed time = {}, ref,{}, presseure, {}, Angle, {}".format(timeElapsed,r,pSens0.get_value(),angle))
     
 def initHardware():
     pSens0 = DPressureSens(0,P_mplx_id)
