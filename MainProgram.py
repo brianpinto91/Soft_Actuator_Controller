@@ -45,16 +45,13 @@ P_mplx_id = 4
 sButton = "P9_23"
 
 #Controller parameters
-MAX_CTROUT = 0.50     # [10V]
-TSAMPLING = 0.001     # [sec]
-PID = [1.05, 0.03, 0.01]    # [1]
-PIDimu = [0.0117, 1.012, 0.31]
+
 MAX_PRESSURE = 1.0
 
 MAX_CTROUT = 0.50     # [10V]
 TSAMPLING = 0.001     # [sec]
 PIDp = [1.05, 0.03, 0.01]    # [1]
-PIDa = [0.01, 0.01, 0.000001]
+PIDa = [0.5, 0.3, 0.4]
 
 
 '''
@@ -62,8 +59,8 @@ PIDa = [0.01, 0.01, 0.000001]
 '''
 def main():
     pSens0, IMUsens0, IMUsens1, pActuator, dActuator, stopButton = initHardware()
-    pController = Controller.PidController(PID,TSAMPLING,MAX_CTROUT)
-    aController = Controller.PidController(PIDimu,TSAMPLING,MAX_CTROUT)
+    pController = Controller.PidController(PIDp,TSAMPLING,MAX_CTROUT)
+    aController = Controller.PidController(PIDa,TSAMPLING,MAX_PRESSURE)
    
     pActuator.set_pwm(10)
     time.sleep(5)
@@ -80,19 +77,20 @@ def main():
 
     """
     
-    Aref = [40]
+    Aref = 40.0
     try:
        while not stopButton.isPressed():
            #read system output
            Pout = pSens0.get_value()
            Aout = calc_angle(IMUsens1,IMUsens0,0)
-           
+           logger.debug("Error, {}".format(Aout-Aref))
            #set pressure reference based on angle output
            #Bound the reference pressure between 0 and MAX_Pressure
            Pref = pressureSaturate(aController.output(Aref,Aout))
-           
+           logger.debug("Pref, {}".format(Pref))
            #Use pressure controller to follow the pressure reference
            Actuator_IN = Controller.sys_input(pController.output(Pref,Pout))
+           logger.debug("Set PWM, {}".format(Actuator_IN))
            pActuator.set_pwm(Actuator_IN)
            
            time.sleep(TSAMPLING)
