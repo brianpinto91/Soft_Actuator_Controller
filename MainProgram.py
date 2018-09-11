@@ -54,7 +54,7 @@ MAX_PRESSURE = 1.0
 MAX_CTROUT = 0.50     # [10V]
 TSAMPLING = 0.001     # [sec]
 PIDp = [1.05, 0.03, 0.01]    # [1]
-PIDa = [0.8, 0.5, 0.0]
+PIDa = [0.01, 0.01, 0.000001]
 
 
 '''
