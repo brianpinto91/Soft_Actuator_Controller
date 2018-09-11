@@ -62,7 +62,7 @@ def mainP():
     
     startTime=datetime.datetime.now()
         
-    Pref=0.7
+    Pref = [0.7]
     
     try:    
         for r in Pref:
@@ -92,7 +92,7 @@ def mainA():
         
     startTime=datetime.datetime.now()
         
-    Aref=75.0
+    Aref = [75.0]
     
     try:    
         for r in Aref:
