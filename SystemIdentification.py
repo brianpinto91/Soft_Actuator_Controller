@@ -21,7 +21,7 @@ logger.setLevel(logging.DEBUG)
 formatter=logging.Formatter("%(message)s")
 file_handler =logging.FileHandler('P_to_A_Log.log')
 file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
+#logger.addHandler(file_handler)
 
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(formatter)
