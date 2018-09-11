@@ -47,28 +47,56 @@ stopButton = "P9_23"
 
 MAX_CTROUT = 0.50     # [10V]
 TSAMPLING = 0.001     # [sec]
-PID = [1.05, 0.03, 0.01]    # [1]
-PIDimu = [0.0117, 1.012, 0.31]
+PIDp = [1.05, 0.03, 0.01]    # [1]
+PIDa = [0.0117, 1.012, 0.31]
 
-def main():
+def mainP():
     pSens0, IMUsens0, IMUsens1, pActuator, dActuator = initHardware()
     
         #clear any air inside the actuator before starting the experiment
     pActuator.set_pwm(10)
     time.sleep(5)
-    samples = 200
+    samples = 500
         
-    #pController = controller.PidController(PID,TSAMPLING,MAX_CTROUT)
-    aController = controller.PidController(PID_imu, TSAMPLING,MAX_CTROUT)
+    pController = controller.PidController(PIDp,TSAMPLING,MAX_CTROUT)
+    
+    startTime=datetime.datetime.now()
+        
+    Pref=0.7
+    
+    try:    
+        for r in Pref:
+            for u in range(samples):
+                Pout = pSens0.get_value()
+                ctrout = controller.sys_input(pController.output(Pref,Pout))
+                pActuator.set_pwm(ctrout)
+                time.sleep(TSAMPLING)
+                logReadings(IMUsens1,IMUsens0,pSens0,startTime,r)
+        
+    
+    except Exception as err:
+        logger.error("Error running the program: {}".format(err))
+    finally:
+        GPIO.cleanup()
+        pActuator.set_pwm(10.0)
+
+def mainA():
+    pSens0, IMUsens0, IMUsens1, pActuator, dActuator = initHardware()
+    
+        #clear any air inside the actuator before starting the experiment
+    pActuator.set_pwm(10)
+    time.sleep(5)
+    samples = 500
+        
+    aController = controller.PidController(PIDa, TSAMPLING,MAX_CTROUT)
         
     startTime=datetime.datetime.now()
         
-    reference=[75.0]
+    Aref=75.0
     
     try:    
-        for r in reference:
+        for r in Aref:
             for u in range(samples):
-                #Pout = pSens0.get_value()
                 Aout = calc_angle(IMUsens1,IMUsens0,0)
                 ctrout = controller.sys_input(aController.output(r,Aout))
                 pActuator.set_pwm(ctrout)
@@ -81,7 +109,6 @@ def main():
     finally:
         GPIO.cleanup()
         pActuator.set_pwm(10.0)
-
 def logReadings(IMUsens1,IMUsens0,pSens0,startTime,r):
     angle = calc_angle(IMUsens1,IMUsens0,0)
     timeElapsed = datetime.datetime.now()-startTime
@@ -270,4 +297,4 @@ def rotate(vec, theta):
 
 
 if __name__ == "__main__":
-    main()
+    mainA()
