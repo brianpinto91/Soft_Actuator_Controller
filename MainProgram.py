@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Aug 15 22:26:35 2018
-
 @author: BrianPinto
 """
 
@@ -45,22 +44,22 @@ P_mplx_id = 4
 sButton = "P9_23"
 
 #Controller parameters
-
-MAX_PRESSURE = 1.0
-
-MAX_CTROUT = 0.50     # [10V]
+MAX_PWM = 75.0    # [10V]
+MIN_PWM = 0.0
 TSAMPLING = 0.001     # [sec]
 PIDp = [1.05, 0.03, 0.01]    # [1]
-PIDa = [0.5, 0.3, 0.4]
+PIDa = [0.0117, 1.012, 0.31]
+MAX_PRESSURE = 1.0
+MIN_PRESSURE = 0.
 
 
 '''
-  
+
 '''
 def main():
     pSens0, IMUsens0, IMUsens1, pActuator, dActuator, stopButton = initHardware()
-    pController = Controller.PidController(PIDp,TSAMPLING,MAX_CTROUT)
-    aController = Controller.PidController(PIDa,TSAMPLING,MAX_PRESSURE)
+    pController = Controller.PidController(PIDp,TSAMPLING,MAX_PWM,MIN_PWM)
+    aController = Controller.PidController(PIDa,TSAMPLING,MAX_PRESSURE,MIN_PRESSURE)
    
     pActuator.set_pwm(10)
     time.sleep(5)
@@ -74,7 +73,6 @@ def main():
               |                                                      -----------------------------------------------              |
               |                                                                                                                   |
               ---------------------------------------------------------------------------------------------------------------------
-
     """
     
     Aref = 40.0
@@ -83,15 +81,15 @@ def main():
            #read system output
            Pout = pSens0.get_value()
            Aout = calc_angle(IMUsens1,IMUsens0,0)
-           logger.debug("Error, {}".format(Aout-Aref))
+           logger.debug("Error, {}".format(Aref-Aout))
            #set pressure reference based on angle output
            #Bound the reference pressure between 0 and MAX_Pressure
-           Pref = pressureSaturate(aController.output(Aref,Aout))
+           Pref = aController.output(Aref,Aout)
            logger.debug("Pref, {}".format(Pref))
            #Use pressure controller to follow the pressure reference
-           Actuator_IN = Controller.sys_input(pController.output(Pref,Pout))
-           logger.debug("Set PWM, {}".format(Actuator_IN))
-           pActuator.set_pwm(Actuator_IN)
+           ctr_out = pController.output(Pref,Pout)
+           logger.debug("PWM, {}".format(ctr_out))
+           pActuator.set_pwm(ctr_out)
            
            time.sleep(TSAMPLING)
            logReadings(IMUsens1,IMUsens0,pSens0,startTime,Aref)
@@ -100,18 +98,12 @@ def main():
     finally:
         GPIO.cleanup()
         pActuator.set_pwm(10.0)
-
+        
 def logReadings(IMUsens1,IMUsens0,pSens0,startTime,Aref):
     angle = calc_angle(IMUsens1,IMUsens0,0)
     timeElapsed = datetime.datetime.now()-startTime
-    logger.debug("Elapsed time = {}, ref,{}, presseure, {}, Angle, {}".format(timeElapsed,Aref,pSens0.get_value(),angle))
-    
-def pressureSaturate(inPressure):
-    if inPressure > MAX_PRESSURE:
-        return MAX_PRESSURE
-    else:
-        return 0
-    
+    logger.debug("Elapsed time, {}, ref, {}, presseure, {}, Angle, {}".format(timeElapsed,Aref,pSens0.get_value(),angle))        
+
 def initHardware():
     pSens0 = Sensors.DPressureSens(0,P_mplx_id)
     IMUsens0 = Sensors.MPU_9150(0,mplx_id_0)
