@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sun Sep  2 15:55:47 2018
-
 @author: BrianPinto
 """
 
@@ -50,6 +49,27 @@ TSAMPLING = 0.001     # [sec]
 PIDp = [1.05, 0.03, 0.01]    # [1]
 PIDa = [0.0117, 1.012, 0.31]
 
+
+def mainPWM():
+    pSens0, IMUsens0, IMUsens1, pActuator, dActuator = initHardware()
+    
+        #clear any air inside the actuator before starting the experiment
+    pActuator.set_pwm(10)
+    time.sleep(5)
+    
+    startTime=datetime.datetime.now()
+        
+    PWM = 75.0
+    
+    try:
+        while not GPIO.event_detected(stopButton):
+            logReadings(IMUsens1,IMUsens0,pSens0,startTime,PWM)
+    except Exception as err:
+            logger.error("Error running the program: {}".format(err))
+    finally:
+        GPIO.cleanup()
+        pActuator.set_pwm(10.0)
+        
 def mainP():
     pSens0, IMUsens0, IMUsens1, pActuator, dActuator = initHardware()
     
@@ -109,10 +129,11 @@ def mainA():
     finally:
         GPIO.cleanup()
         pActuator.set_pwm(10.0)
+
 def logReadings(IMUsens1,IMUsens0,pSens0,startTime,r):
     angle = calc_angle(IMUsens1,IMUsens0,0)
     timeElapsed = datetime.datetime.now()-startTime
-    logger.debug("Elapsed time = {}, ref,{}, presseure, {}, Angle, {}".format(timeElapsed,r,pSens0.get_value(),angle))
+    logger.debug("Elapsed time, {}, ref, {}, presseure, {}, Angle, {}".format(timeElapsed,r,pSens0.get_value(),angle))
     
 def initHardware():
     pSens0 = DPressureSens(0,P_mplx_id)
@@ -208,7 +229,6 @@ class Valve(object):
 
     def __init__(self, name, pwm_pin):
         """*Initialize with*
-
         Args:
            pwm_pin_0 (str): Pin for pwm 1, e.g. "P9_14"
         """
@@ -230,7 +250,6 @@ class Valve(object):
 
     def set_pwm(self, duty_cycle):
         """Set the pwm to **duty_cycle**
-
         Args:
             duty_cycle (int): Value between 0 to 100
         """
@@ -243,7 +262,6 @@ class DiscreteValve(object):
 
     def __init__(self, name, pin):
         """*Initialize with*
-
         Args:
            pin (str): Pin GPIO of BBB, e.g. "P8_7"
         """
@@ -297,4 +315,4 @@ def rotate(vec, theta):
 
 
 if __name__ == "__main__":
-    mainA()
+    mainPWM()
