@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat Sep  1 19:47:20 2018
-
 @author: BrianPinto
 """
 
@@ -29,11 +28,9 @@ class Controller(object):  # pragma: no cover
     @abc.abstractmethod
     def output(self, reference, system_output):
         """ compute the controller output and return
-
         Args:
             reference (float): where the system should be
             system_output (float): where the system actually is
-
         Returns:
             (float): controller_output for given input data
         """
@@ -44,18 +41,15 @@ class PidController(Controller):
     """
     A simple PID controller
     """
-    def __init__(self, gain, tsampling, max_output):
+    def __init__(self, gain, tsampling, max_output, min_output):
         """
         Args:
             gain (list): gains of the diffrent parts of ctr
-
                 ====== = ============
                 | gain = [Kp, Ti, Td]
                 ====== = ============
-
             Ts (float): sampling time of the controller / overall system
             max_output (float): saturation of output
-
         Example:
             >>> Kp, Ti, Td = 10, 1.2, .4
             >>> gain = [Kp, Ti, Td]
@@ -67,7 +61,9 @@ class PidController(Controller):
         self.Ti = gain[1]
         self.Td = gain[2]
         self.max_output = max_output
+        self.min_output = min_output
         self.integral = 0.
+        self.differential = 0.
         self.last_err = 0.
         self.last_out = 0.
         self.windup_guard = 0
@@ -78,6 +74,9 @@ class PidController(Controller):
     def set_maxoutput(self, maxoutput):
         self.max_output = maxoutput
 
+    def set_minoutput(self, minoutput):
+        self.min_output = minoutput
+    
     def set_initial_cable_length(self, initial_cable_length):
         self.initial_cable_length = initial_cable_length
 
@@ -96,17 +95,14 @@ class PidController(Controller):
     def output(self, reference, system_output):
         """
         The controller output is calculated by:
-
         ========== = ======================================
         | e        = r-y
         |
         | ctr_out  = Kp*e + Kp/Ti*integral(e) + Kp*Td*de/dt
         ========== = ======================================
-
         Args:
             reference (float): where the system should be
             system_output (float): where the system actually is
-
         Returns:
             (float): controller_output
         """
@@ -116,10 +112,32 @@ class PidController(Controller):
         # diff = (err - self.last_err)/self.tsampling
         diff = (self.gam*self.Td - self.tsampling/2) / \
             (self.gam*self.Td + self.tsampling/2) * \
-            self.last_out + \
-            self.Td/(self.gam+self.tsampling/2)*(err-self.last_err)
-        self.last_err = err
+            self.differential + \
+            self.Td/(self.gam*self.Td+self.tsampling/2)*(err-self.last_err)
+        
         # Integral Anteil
+        integ = self.integral + self.tsampling / \
+            (2*self.Ti)*(err+self.last_err)
+        
+        self.differential = diff
+        self.integral = integ
+        self.last_err = err
+        
+        controller_output = self.Kp*(err + integ + diff)
+        
+        if controller_output > self.max_output:
+            self.last_out = self.max_output
+            self.integral=self.max_output
+        
+        elif controller_output > self.max_output:
+            self.last_out = self.min_output
+            self.integral=self.min_output
+        else:
+            self.last_out = controller_output
+        
+        return self.last_out
+        
+        """
         integ = self.integral + self.tsampling / \
             (2*self.Ti)*(err-self.windup_guard)
         if np.abs(integ) > self.max_output:
@@ -129,6 +147,7 @@ class PidController(Controller):
         # Sum
         controller_output = self.Kp*(err + integ + diff)
 
+
         if np.abs(controller_output) > self.max_output:
             self.windup_guard = controller_output * \
                 (1-self.max_output/abs(controller_output))
@@ -137,6 +156,6 @@ class PidController(Controller):
             self.windup_guard = 0
             self.last_out = controller_output
         return self.last_out
-
+        """
 def sys_input(ctr_out):
     return (.5 + ctr_out/2)*100
