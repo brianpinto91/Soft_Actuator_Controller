@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Created on Sun Sep  2 15:55:47 2018
 @author: BrianPinto
@@ -18,9 +19,9 @@ import Controller as controller
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 formatter=logging.Formatter("%(message)s")
-file_handler =logging.FileHandler('P_to_A_Log.log')
+file_handler =logging.FileHandler('4102018.log')
 file_handler.setFormatter(formatter)
-#logger.addHandler(file_handler)
+logger.addHandler(file_handler)
 
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(formatter)
@@ -49,50 +50,34 @@ TSAMPLING = 0.001     # [sec]
 PIDp = [1.05, 0.03, 0.01]    # [1]
 PIDa = [0.0117, 1.012, 0.31]
 
-
-def mainPWM():
-    pSens0, IMUsens0, IMUsens1, pActuator, dActuator = initHardware()
-    
-        #clear any air inside the actuator before starting the experiment
-    pActuator.set_pwm(10)
-    time.sleep(5)
-    
-    startTime=datetime.datetime.now()
-        
-    PWM = 75.0
-    
-    try:
-        while not GPIO.event_detected(stopButton):
-            logReadings(IMUsens1,IMUsens0,pSens0,startTime,PWM)
-    except Exception as err:
-            logger.error("Error running the program: {}".format(err))
-    finally:
-        GPIO.cleanup()
-        pActuator.set_pwm(10.0)
-        
 def mainP():
     pSens0, IMUsens0, IMUsens1, pActuator, dActuator = initHardware()
     
-        #clear any air inside the actuator before starting the experiment
+    #clear any air inside the actuator before starting the experiment
     pActuator.set_pwm(10)
     time.sleep(5)
-    samples = 500
-        
+    samples1 = 40
+    samples2 = 500    
     pController = controller.PidController(PIDp,TSAMPLING,MAX_CTROUT)
-    
+    #aController = controller.PidController(PIDa,TSAMPLING,MAX_CTROUT)
     startTime=datetime.datetime.now()
         
-    Pref = [0.7]
     
-    try:    
-        for r in Pref:
-            for u in range(samples):
-                Pout = pSens0.get_value()
-                ctrout = controller.sys_input(pController.output(Pref,Pout))
-                pActuator.set_pwm(ctrout)
-                time.sleep(TSAMPLING)
-                logReadings(IMUsens1,IMUsens0,pSens0,startTime,r)
-        
+    try:
+        Pref = [2]
+        for u in range(samples1):
+            Pout = pSens0.get_value()
+            ctrout = controller.sys_input(pController.output(Pref,Pout))
+            pActuator.set_pwm(ctrout)
+            time.sleep(TSAMPLING)
+            logReadings(IMUsens1,IMUsens0,pSens0,startTime,Pref)
+        Pref = [0.5]
+        for u in range(samples2):
+            Pout = pSens0.get_value()
+            ctrout = controller.sys_input(pController.output(Pref,Pout))
+            pActuator.set_pwm(ctrout)
+            time.sleep(TSAMPLING)
+            logReadings(IMUsens1,IMUsens0,pSens0,startTime,Pref)
     
     except Exception as err:
         logger.error("Error running the program: {}".format(err))
@@ -129,11 +114,10 @@ def mainA():
     finally:
         GPIO.cleanup()
         pActuator.set_pwm(10.0)
-
 def logReadings(IMUsens1,IMUsens0,pSens0,startTime,r):
     angle = calc_angle(IMUsens1,IMUsens0,0)
     timeElapsed = datetime.datetime.now()-startTime
-    logger.debug("Elapsed time, {}, ref, {}, presseure, {}, Angle, {}".format(timeElapsed,r,pSens0.get_value(),angle))
+    logger.debug("Elapsed time = {}, ref,{}, presseure, {}, Angle, {}".format(timeElapsed,r,pSens0.get_value(),angle))
     
 def initHardware():
     pSens0 = DPressureSens(0,P_mplx_id)
@@ -315,4 +299,4 @@ def rotate(vec, theta):
 
 
 if __name__ == "__main__":
-    mainPWM()
+    mainP()
