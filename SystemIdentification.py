@@ -27,8 +27,6 @@ console_handler = logging.StreamHandler()
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
-
-#test belly top left
 #pressure sensor connected on mplx_id 4
 #MPU9150 sensor 0 connected on mplx_id 0
 #MPU9150 sensor 1 connected on mplx_id 1
@@ -37,12 +35,12 @@ logger.addHandler(console_handler)
 
 
 #Define the ports
-pValve0 = "P9_22"
-dValve0 = "P8_10"
-mplx_id_0 = 0
-mplx_id_1 = 1
-P_mplx_id = 4
-stopButton = "P9_23"
+pValve0 = "P9_22" #pressure channel 0 on the GeckoControl board
+dValve0 = "P8_10" #vaccum channel 0 on the GeckoControl board
+mplx_id_0 = 0 #IMU sensor connected mounted on the base of Actuator connected to multiplexer channel 0
+mplx_id_1 = 1 #IMU sensor connected mounted on the base of Actuator connected to multiplexer channel 1
+P_mplx_id = 4 #pressure sensor of channel 0 in control board
+stopButton = "P9_23" #stop button as push button connected to GPIO P9_23
 
 
 MAX_CTROUT = 0.50     # [10V]
@@ -52,26 +50,24 @@ PIDa = [0.0117, 1.012, 0.31]
 
 def mainP():
     pSens0, IMUsens0, IMUsens1, pActuator, dActuator = initHardware()
-    
-    #clear any air inside the actuator before starting the experiment
-    pActuator.set_pwm(10)
+    pActuator.set_pwm(10) #clear any air inside the actuator before starting the experiment
     time.sleep(5)
     samples1 = 40
     samples2 = 500    
     pController = controller.PidController(PIDp,TSAMPLING,MAX_CTROUT)
-    #aController = controller.PidController(PIDa,TSAMPLING,MAX_CTROUT)
     startTime=datetime.datetime.now()
-        
-    
+    last_process_time = time.time()    
+    process_time = 0
     try:
-        Pref = [2]
+        while not stopButton.isPressed
+        Pref = [2] #boost pressure reference
         for u in range(samples1):
             Pout = pSens0.get_value()
             ctrout = controller.sys_input(pController.output(Pref,Pout))
             pActuator.set_pwm(ctrout)
             time.sleep(TSAMPLING)
             logReadings(IMUsens1,IMUsens0,pSens0,startTime,Pref)
-        Pref = [0.5]
+        Pref = [0.5] #final pressure reference
         for u in range(samples2):
             Pout = pSens0.get_value()
             ctrout = controller.sys_input(pController.output(Pref,Pout))
@@ -127,7 +123,6 @@ def initHardware():
     dActuator = DiscreteValve(0,dValve0)
     GPIO.setup(stopButton, GPIO.IN)
     GPIO.add_event_detect(stopButton, GPIO.RISING)
-    #exitButton = stopButton
     return pSens0, IMUsens0, IMUsens1, pActuator, dActuator
 
 
