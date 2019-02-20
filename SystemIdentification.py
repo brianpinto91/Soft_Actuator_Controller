@@ -59,7 +59,6 @@ def mainP():
     last_process_time = time.time()    
     process_time = 0
     try:
-        while not stopButton.isPressed
         Pref = [2] #boost pressure reference
         for u in range(samples1):
             Pout = pSens0.get_value()
